@@ -103,7 +103,18 @@ function setupRealtimeStorageSync() {
 }
 
 function saveSubmissions() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(submissions));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(submissions));
+  } catch (e) {
+    console.warn('Storage quota exceeded, optimizing saved items:', e);
+    // Keep newest 30 submissions to avoid storage quota errors on client devices
+    if (submissions.length > 30) {
+      submissions = submissions.slice(0, 30);
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(submissions));
+      } catch (err) {}
+    }
+  }
 }
 
 function populateDropdowns() {
@@ -141,6 +152,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initNotifications();
   populateDropdowns();
   setupDragAndDrop();
+  
+  // Default to Participant Mode so all link visitors can upload immediately
+  switchUserRole('participant');
+
   renderAllViews();
   updateHeroStats();
   setupKeyboardListeners();
@@ -308,23 +323,59 @@ function processFile(file) {
     return;
   }
 
-  // Max 15MB limit check
-  if (file.size > 15 * 1024 * 1024) {
-    showToast('File size exceeds 15MB limit!', 'error');
+  // Support file uploads up to 25MB smoothly
+  if (file.size > 25 * 1024 * 1024) {
+    showToast('File size exceeds 25MB limit!', 'error');
     return;
   }
 
   const reader = new FileReader();
   reader.onload = (e) => {
-    selectedImageDataUrl = e.target.result;
-    
-    // Update dropzone text indicator without showing image preview box
-    const dropzoneText = document.getElementById('dropzoneText');
-    if (dropzoneText) {
-      dropzoneText.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--primary); font-size:1.1rem;"></i> Attached File: <strong>${escapeHtml(file.name)}</strong>`;
-    }
-    
-    showToast('Image file attached successfully!', 'success');
+    const rawUrl = e.target.result;
+
+    // Fast HTML5 canvas optimization for browser memory and quota safety
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxDim = 1280;
+      let width = img.width;
+      let height = img.height;
+
+      if (width > maxDim || height > maxDim) {
+        if (width > height) {
+          height = Math.round((height * maxDim) / width);
+          width = maxDim;
+        } else {
+          width = Math.round((width * maxDim) / height);
+          height = maxDim;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+
+      selectedImageDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+      const dropzoneText = document.getElementById('dropzoneText');
+      if (dropzoneText) {
+        dropzoneText.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--primary); font-size:1.1rem;"></i> Attached File: <strong>${escapeHtml(file.name)}</strong>`;
+      }
+
+      showToast('Image attached and optimized successfully!', 'success');
+    };
+
+    img.onerror = () => {
+      selectedImageDataUrl = rawUrl;
+      const dropzoneText = document.getElementById('dropzoneText');
+      if (dropzoneText) {
+        dropzoneText.innerHTML = `<i class="fa-solid fa-circle-check" style="color:var(--primary); font-size:1.1rem;"></i> Attached File: <strong>${escapeHtml(file.name)}</strong>`;
+      }
+      showToast('Image attached successfully!', 'success');
+    };
+
+    img.src = rawUrl;
   };
   reader.readAsDataURL(file);
 }

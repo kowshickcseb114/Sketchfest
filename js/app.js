@@ -44,7 +44,36 @@ function initStorage() {
   }
 }
 
+const realtimeChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('dynamoz26_sketchfest_channel') : null;
+
+function notifyRealtimeSubmission(entry) {
+  if (realtimeChannel) {
+    try {
+      realtimeChannel.postMessage({ type: 'NEW_SUBMISSION', payload: entry });
+    } catch(e) {}
+  }
+}
+
 function setupRealtimeStorageSync() {
+  if (realtimeChannel) {
+    realtimeChannel.onmessage = (event) => {
+      if (event.data && event.data.type === 'NEW_SUBMISSION') {
+        const storedData = localStorage.getItem(STORAGE_KEY);
+        if (storedData) {
+          try {
+            submissions = JSON.parse(storedData);
+            renderAllViews();
+            updateHeroStats();
+            if (isAdminAuthenticated) {
+              const newest = event.data.payload;
+              showToast(`⚡ Real-time Alert: New response received from ${newest.participantName} (${newest.department})`, 'success');
+            }
+          } catch(e) {}
+        }
+      }
+    };
+  }
+
   window.addEventListener('storage', (event) => {
     if (event.key === STORAGE_KEY && event.newValue) {
       try {
@@ -144,19 +173,41 @@ function switchUserRole(role) {
   const btnAdmin = document.getElementById('btnAdminMode');
   const adminSection = document.getElementById('admin-section');
   const uploadSection = document.getElementById('upload-section');
+  const heroSection = document.getElementById('hero');
+  const rulesSection = document.getElementById('rules-section');
 
   if (role === 'admin') {
     btnAdmin.classList.add('active');
     btnParticipant.classList.remove('active');
     
-    adminSection.classList.add('active');
-    adminSection.scrollIntoView({ behavior: 'smooth' });
-    showToast('Admin Access Granted: Control Room Unlocked', 'success');
+    // Hide Participant Upload Form, Hero, and Rules in Admin Panel Mode
+    if (uploadSection) uploadSection.style.display = 'none';
+    if (heroSection) heroSection.style.display = 'none';
+    if (rulesSection) rulesSection.style.display = 'none';
+
+    // Show Admin Responses Control Room
+    if (adminSection) {
+      adminSection.style.display = 'block';
+      adminSection.classList.add('active');
+      adminSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    showToast('Admin Access Granted: Participant Responses Control Room Unlocked', 'success');
   } else {
     btnParticipant.classList.add('active');
     btnAdmin.classList.remove('active');
     
-    adminSection.classList.remove('active');
+    // Show Participant Upload Form, Hero, and Rules
+    if (uploadSection) uploadSection.style.display = 'block';
+    if (heroSection) heroSection.style.display = 'block';
+    if (rulesSection) rulesSection.style.display = 'block';
+
+    // Hide Admin Control Room
+    if (adminSection) {
+      adminSection.style.display = 'none';
+      adminSection.classList.remove('active');
+    }
+
     uploadSection.scrollIntoView({ behavior: 'smooth' });
     showToast('Switched to Participant View', 'info');
   }
@@ -362,6 +413,9 @@ function handleFormSubmission(event) {
   // Prepend to submissions array
   submissions.unshift(newEntry);
   saveSubmissions();
+
+  // Broadcast real-time event to Admin Panel across tabs & sessions
+  notifyRealtimeSubmission(newEntry);
 
   // Add Notification to Admin Control Room
   addAdminNotification(newEntry);

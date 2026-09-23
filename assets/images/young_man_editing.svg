@@ -1,0 +1,190 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 675" width="100%" height="100%">
+  <defs>
+    <!-- Background Gradient -->
+    <radialGradient id="bgRadial" cx="40%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#091d0f" />
+      <stop offset="50%" stop-color="#040b06" />
+      <stop offset="100%" stop-color="#010301" />
+    </radialGradient>
+
+    <!-- Neon Glow Filters -->
+    <filter id="neonGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <filter id="intenseGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="20" result="blur1" />
+      <feGaussianBlur stdDeviation="8" result="blur2" />
+      <feMerge>
+        <feMergeNode in="blur1" />
+        <feMergeNode in="blur2" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Screen & Light Gradients -->
+    <linearGradient id="screenGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ff66" />
+      <stop offset="50%" stop-color="#059669" />
+      <stop offset="100%" stop-color="#021d0a" />
+    </linearGradient>
+
+    <linearGradient id="manSkin" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1b3823" />
+      <stop offset="100%" stop-color="#09150c" />
+    </linearGradient>
+
+    <linearGradient id="manHoodie" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#122416" />
+      <stop offset="100%" stop-color="#050a06" />
+    </linearGradient>
+
+    <linearGradient id="laptopGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#1a2e1e" />
+      <stop offset="100%" stop-color="#0b170c" />
+    </linearGradient>
+  </defs>
+
+  <!-- Deep Black & Green Background -->
+  <rect width="900" height="675" fill="url(#bgRadial)" />
+
+  <!-- Cyberpunk Tech Grid Lines in Background -->
+  <g opacity="0.06" stroke="#00ff66" stroke-width="1">
+    <line x1="0" y1="120" x2="900" y2="120" />
+    <line x1="0" y1="240" x2="900" y2="240" />
+    <line x1="0" y1="360" x2="900" y2="360" />
+    <line x1="0" y1="480" x2="900" y2="480" />
+    <line x1="150" y1="0" x2="150" y2="675" />
+    <line x1="300" y1="0" x2="300" y2="675" />
+    <line x1="450" y1="0" x2="450" y2="675" />
+    <line x1="600" y1="0" x2="600" y2="675" />
+    <line x1="750" y1="0" x2="750" y2="675" />
+  </g>
+
+  <!-- Desk Surface -->
+  <polygon points="0,540 900,540 900,675 0,675" fill="#050a06" />
+  <line x1="0" y1="540" x2="900" y2="540" stroke="#00ff66" stroke-width="2" opacity="0.3" filter="url(#neonGlow)" />
+
+  <!-- Light Projection Ray from Monitor onto Desk & Young Man -->
+  <polygon points="340,160 820,160 880,540 180,540" fill="url(#screenGrad)" opacity="0.07" />
+
+  <!-- Main Monitor displaying Photo Editing Software -->
+  <!-- Outer Bezel -->
+  <rect x="340" y="140" width="480" height="320" rx="12" fill="#09130a" stroke="#00ff66" stroke-width="3" filter="url(#neonGlow)" />
+  <!-- Display Screen Area -->
+  <rect x="352" y="152" width="456" height="296" rx="6" fill="#020603" />
+
+  <!-- Software UI Interface (Photoshop / Lightroom style) -->
+  <!-- Header Bar -->
+  <rect x="352" y="152" width="456" height="28" fill="#07150a" />
+  <circle cx="366" cy="166" r="4" fill="#ef4444" opacity="0.7" />
+  <circle cx="380" cy="166" r="4" fill="#facc15" opacity="0.7" />
+  <circle cx="394" cy="166" r="4" fill="#00ff66" opacity="0.7" />
+  <text x="580" y="171" fill="#00ff66" font-family="sans-serif" font-size="11" font-weight="bold" text-anchor="middle" letter-spacing="1">SKETCHFEST EDITING STUDIO - [YOUNG MAN CREATOR]</text>
+
+  <!-- Left Tool Toolbar -->
+  <rect x="352" y="180" width="36" height="268" fill="#050e07" />
+  <rect x="360" y="190" width="20" height="20" rx="3" fill="#00ff66" opacity="0.8" />
+  <rect x="360" y="220" width="20" height="20" rx="3" fill="rgba(0,255,102,0.15)" />
+  <rect x="360" y="250" width="20" height="20" rx="3" fill="rgba(0,255,102,0.15)" />
+  <rect x="360" y="280" width="20" height="20" rx="3" fill="rgba(0,255,102,0.15)" />
+  <rect x="360" y="310" width="20" height="20" rx="3" fill="rgba(0,255,102,0.15)" />
+
+  <!-- Center Photo Canvas Area -->
+  <rect x="396" y="188" width="290" height="210" fill="#040b05" stroke="rgba(0,255,102,0.3)" stroke-dasharray="4" />
+  
+  <!-- Image Being Edited on Screen (Landscape Photo with Neon Mountain & Sun) -->
+  <path d="M406,370 L470,280 L520,330 L580,250 L676,370 Z" fill="url(#screenGrad)" opacity="0.75" />
+  <circle cx="610" cy="240" r="24" fill="#00ff66" filter="url(#intenseGlow)" />
+  <!-- Editing Crop Box Handles -->
+  <rect x="420" y="210" width="240" height="150" fill="none" stroke="#00ff66" stroke-width="1.5" stroke-dasharray="6,4" />
+  <rect x="417" y="207" width="6" height="6" fill="#00ff66" />
+  <rect x="657" y="207" width="6" height="6" fill="#00ff66" />
+  <rect x="417" y="357" width="6" height="6" fill="#00ff66" />
+  <rect x="657" y="357" width="6" height="6" fill="#00ff66" />
+
+  <!-- Timeline / Color Adjustment Sliders at Bottom of Screen -->
+  <rect x="396" y="405" width="290" height="35" rx="4" fill="#071309" />
+  <!-- Sliders -->
+  <line x1="410" y1="417" x2="670" y2="417" stroke="#122b17" stroke-width="4" stroke-linecap="round" />
+  <line x1="410" y1="417" x2="550" y2="417" stroke="#00ff66" stroke-width="4" stroke-linecap="round" />
+  <circle cx="550" cy="417" r="6" fill="#00ff66" filter="url(#intenseGlow)" />
+
+  <line x1="410" y1="430" x2="670" y2="430" stroke="#122b17" stroke-width="4" stroke-linecap="round" />
+  <line x1="410" y1="430" x2="490" y2="430" stroke="#84cc16" stroke-width="4" stroke-linecap="round" />
+  <circle cx="490" cy="430" r="6" fill="#84cc16" />
+
+  <!-- Right Inspector Panel (Layers & Color Wheel) -->
+  <rect x="694" y="180" width="106" height="260" fill="#050d06" />
+  <!-- Color Wheel -->
+  <circle cx="747" cy="225" r="26" fill="none" stroke="#00ff66" stroke-width="3" />
+  <circle cx="758" cy="214" r="5" fill="#00ff66" filter="url(#intenseGlow)" />
+  <!-- Layer Blocks -->
+  <rect x="702" y="265" width="90" height="22" rx="3" fill="rgba(0,255,102,0.2)" stroke="#00ff66" stroke-width="1" />
+  <rect x="702" y="295" width="90" height="22" rx="3" fill="rgba(0,255,102,0.08)" />
+  <rect x="702" y="325" width="90" height="22" rx="3" fill="rgba(0,255,102,0.08)" />
+  <rect x="702" y="355" width="90" height="22" rx="3" fill="rgba(0,255,102,0.08)" />
+
+  <!-- Monitor Stand -->
+  <rect x="560" y="460" width="40" height="60" fill="#09130a" stroke="#00ff66" stroke-width="1" />
+  <ellipse cx="580" cy="520" rx="70" ry="12" fill="#060e07" stroke="#00ff66" stroke-width="1.5" />
+
+  <!-- Laptop open on desk in front of monitor -->
+  <polygon points="400,500 560,500 580,535 380,535" fill="url(#laptopGrad)" stroke="#00ff66" stroke-width="1.5" />
+  <!-- Keyboard Keys Backlight -->
+  <polygon points="415,505 545,505 555,525 405,525" fill="#00ff66" opacity="0.25" />
+
+  <!-- Graphics Pen Tablet on Desk -->
+  <rect x="230" y="510" width="130" height="85" rx="6" fill="#09150b" stroke="#00ff66" stroke-width="1.5" transform="rotate(-5, 295, 552)" />
+  <rect x="240" y="520" width="110" height="65" rx="3" fill="#030703" transform="rotate(-5, 295, 552)" />
+  <circle cx="248" cy="530" r="3" fill="#00ff66" filter="url(#neonGlow)" />
+
+  <!-- YOUNG MAN CREATOR SILHOUETTE (Editing Pose) -->
+  <g id="youngManPose">
+    <!-- Torso & Hoodie (Seated Side Profile facing right towards screen) -->
+    <path d="M40,675 C50,560 90,420 180,390 C220,380 270,410 250,500 C240,540 230,620 220,675 Z" fill="url(#manHoodie)" stroke="#00ff66" stroke-width="2" />
+    
+    <!-- Young Man Neck -->
+    <path d="M175,395 C185,360 200,345 210,335 L225,390 Z" fill="url(#manSkin)" />
+
+    <!-- Young Man Head & Jawline Profile -->
+    <!-- Chin & Jaw (Masculine Sharp Jawline) -->
+    <path d="M195,335 C220,335 240,320 245,295 C250,270 242,245 225,240 C195,235 175,260 175,290 C175,315 185,335 195,335 Z" fill="url(#manSkin)" stroke="#00ff66" stroke-width="1.5" />
+
+    <!-- Young Man Short Hair Cut (Sleek Modern Fade) -->
+    <path d="M170,280 C172,235 200,220 230,230 C245,235 242,255 235,260 C222,245 195,245 182,275 Z" fill="#040905" stroke="#00ff66" stroke-width="1.2" />
+    
+    <!-- Ear & Headphones around Neck/Ear -->
+    <rect x="190" y="260" width="22" height="34" rx="8" fill="#00ff66" filter="url(#intenseGlow)" opacity="0.9" />
+    <path d="M185,260 C185,230 220,230 220,260" fill="none" stroke="#00ff66" stroke-width="3.5" />
+
+    <!-- Focused Eye Profile looking at Screen -->
+    <ellipse cx="230" cy="270" rx="4" ry="2" fill="#00ff66" filter="url(#neonGlow)" />
+    <!-- Eyebrow -->
+    <path d="M224,263 Q232,260 238,264" fill="none" stroke="#00ff66" stroke-width="1.5" />
+
+    <!-- Arm 1: Left Arm resting on desk near Keyboard -->
+    <path d="M170,440 C210,450 290,480 370,515 C380,520 370,530 350,530 C280,500 210,470 160,475 Z" fill="url(#manHoodie)" stroke="rgba(0,255,102,0.4)" stroke-width="1.5" />
+    <!-- Left Hand touching trackpad/keyboard -->
+    <path d="M365,515 Q385,518 395,524 Q385,528 365,525 Z" fill="url(#manSkin)" stroke="#00ff66" stroke-width="1" />
+
+    <!-- Arm 2: Right Arm holding Stylus Pen over Pen Tablet -->
+    <path d="M190,430 C240,420 280,440 315,505 C320,515 310,525 295,520 C265,470 230,450 180,450 Z" fill="url(#manHoodie)" stroke="#00ff66" stroke-width="2" />
+    
+    <!-- Right Hand holding Stylus Pen -->
+    <circle cx="310" cy="512" r="11" fill="url(#manSkin)" stroke="#00ff66" stroke-width="1" />
+    
+    <!-- Stylus Pen pointing to tablet -->
+    <line x1="290" y1="525" x2="330" y2="495" stroke="#00ff66" stroke-width="4.5" stroke-linecap="round" filter="url(#intenseGlow)" />
+    <!-- Touch Glow Point on Graphics Tablet -->
+    <circle cx="330" cy="495" r="6" fill="#ffffff" filter="url(#intenseGlow)" />
+  </g>
+
+  <!-- Title Badge Top Header -->
+  <rect x="290" y="35" width="320" height="46" rx="23" fill="rgba(2,6,3,0.9)" stroke="#00ff66" stroke-width="2" filter="url(#intenseGlow)" />
+  <text x="450" y="64" fill="url(#screenGrad)" font-family="'Outfit', sans-serif" font-weight="900" font-size="20" text-anchor="middle" letter-spacing="2">SKETCHFEST EDITING POSE</text>
+</svg>

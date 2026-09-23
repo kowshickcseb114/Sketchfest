@@ -73,7 +73,33 @@ function populateDropdowns() {
 
 // Security Settings
 const ADMIN_PASSCODE = 'DYNAMOZ2026';
-let isAdminAuthenticated = false;
+let isAdminAuthenticated = sessionStorage.getItem('dynamoz26_admin_auth') === 'true';
+
+// Notifications & Active State
+let adminNotifications = [];
+const NOTIF_STORAGE_KEY = 'dynamoz26_notifications_v3';
+
+// Initializer
+document.addEventListener('DOMContentLoaded', () => {
+  initStorage();
+  initNotifications();
+  populateDropdowns();
+  setupDragAndDrop();
+  renderAllViews();
+  updateHeroStats();
+  setupKeyboardListeners();
+});
+
+function setupKeyboardListeners() {
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeFullscreenViewer();
+      closeArtworkModal();
+      closeParticipantReceiptModal();
+      closeAdminAuthModal();
+    }
+  });
+}
 
 /* ==========================================================================
    2. User Role Switcher & Admin Security Passcode Engine
@@ -134,6 +160,7 @@ function verifyAdminPasscode() {
 
   if (code.toUpperCase() === ADMIN_PASSCODE || code === 'ADMIN123' || code === '1234') {
     isAdminAuthenticated = true;
+    sessionStorage.setItem('dynamoz26_admin_auth', 'true');
     closeAdminAuthModal();
     switchUserRole('admin');
   } else {
@@ -147,6 +174,7 @@ function verifyAdminPasscode() {
 
 function lockAdminPanel() {
   isAdminAuthenticated = false;
+  sessionStorage.removeItem('dynamoz26_admin_auth');
   switchUserRole('participant');
   showToast('Admin Control Room Locked', 'info');
 }
@@ -292,19 +320,21 @@ function handleFormSubmission(event) {
   submissions.unshift(newEntry);
   saveSubmissions();
 
+  // Add Notification to Admin Control Room
+  addAdminNotification(newEntry);
+
   // Reset Form
   document.getElementById('submissionForm').reset();
   removeSelectedImage();
 
-  showToast(`Entry "${title}" submitted successfully!`, 'success');
+  showToast(`Artwork submitted successfully! Receipt generated.`, 'success');
+
+  // Trigger Participant Receipt Notification Popup Modal
+  openParticipantReceiptModal(newEntry);
 
   // Update UI & Views
   renderAllViews();
   updateHeroStats();
-
-  // Scroll if gallery section exists
-  const gallerySection = document.getElementById('gallery-section');
-  if (gallerySection) gallerySection.scrollIntoView({ behavior: 'smooth' });
 }
 
 /* ==========================================================================
@@ -443,8 +473,14 @@ function renderAdminTable() {
       </td>
       <td>
         <div style="display:flex; gap:0.4rem;">
-          <button class="btn btn-outline-primary btn-sm" onclick="openArtworkModal('${item.id}')" title="Inspect Full Artwork">
+          <button class="btn btn-outline-primary btn-sm" onclick="openArtworkModal('${item.id}')" title="Inspect Details">
             <i class="fa-solid fa-eye"></i>
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="openFullscreenImage('${item.imageUrl}', '${escapeHtml(item.participantName)}', '${escapeHtml(item.department)} - ${escapeHtml(item.registerNumber)}')" title="View Full Screen">
+            <i class="fa-solid fa-expand"></i>
+          </button>
+          <button class="btn btn-outline-primary btn-sm" onclick="downloadSubmissionImage('${item.imageUrl}', '${item.participantName}_${item.registerNumber}_artwork.png')" title="Save / Download Image">
+            <i class="fa-solid fa-download"></i>
           </button>
           <button class="btn btn-danger btn-sm" onclick="deleteSubmission('${item.id}')" title="Delete Response">
             <i class="fa-solid fa-trash"></i>
@@ -473,7 +509,7 @@ function renderAdminGrid() {
   grid.innerHTML = data.map(item => `
     <div class="artwork-card">
       <div class="artwork-img-wrapper" onclick="openArtworkModal('${item.id}')">
-        <img src="${item.imageUrl}" alt="${item.artworkTitle}">
+        <img src="${item.imageUrl}" alt="${item.participantName}">
         <div class="artwork-overlay">
           <div>
             <span class="status-badge status-${item.status.toLowerCase()}">${item.status}</span>
@@ -482,18 +518,19 @@ function renderAdminGrid() {
         </div>
       </div>
       <div class="artwork-body">
-        <div class="artwork-title">${escapeHtml(item.artworkTitle)}</div>
-        <div class="artist-meta">
+        <div class="artist-meta" style="margin-bottom: 0.5rem;">
           <div class="artist-details">
-            <span class="artist-name">${escapeHtml(item.participantName)}</span>
+            <span class="artist-name" style="font-weight:700; font-size:1.05rem;">${escapeHtml(item.participantName)}</span>
             <span class="artist-dept">${escapeHtml(item.department)}</span>
           </div>
           <span class="reg-no-badge">${escapeHtml(item.registerNumber)}</span>
         </div>
-        <div class="artwork-footer">
-          <span style="font-size:0.8rem; color:var(--text-muted);">${item.category}</span>
-          <button class="btn btn-primary btn-sm" onclick="openArtworkModal('${item.id}')">
-            <i class="fa-solid fa-sliders"></i> Review
+        <div class="artwork-footer" style="display:flex; gap:0.5rem; justify-content:flex-end;">
+          <button class="btn btn-primary btn-sm" onclick="openFullscreenImage('${item.imageUrl}', '${escapeHtml(item.participantName)}', '${escapeHtml(item.department)} - ${escapeHtml(item.registerNumber)}')">
+            <i class="fa-solid fa-expand"></i> Full Screen
+          </button>
+          <button class="btn btn-outline-primary btn-sm" onclick="downloadSubmissionImage('${item.imageUrl}', '${item.participantName}_${item.registerNumber}_artwork.png')">
+            <i class="fa-solid fa-download"></i> Save Image
           </button>
         </div>
       </div>
@@ -747,3 +784,177 @@ function escapeHtml(str) {
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;');
 }
+
+/* ==========================================================================
+   9. Notifications System (Participant & Admin)
+   ========================================================================== */
+
+function initNotifications() {
+  const stored = localStorage.getItem(NOTIF_STORAGE_KEY);
+  if (stored) {
+    try {
+      adminNotifications = JSON.parse(stored);
+    } catch (e) {
+      adminNotifications = [];
+    }
+  } else {
+    adminNotifications = [
+      { id: 'notif-1', title: 'New submission response from Aravind Swaminathan (CSE(A))', time: '10:30 AM', read: false },
+      { id: 'notif-2', title: 'New submission response from Priya Sharma (IT)', time: '02:15 PM', read: false }
+    ];
+    saveAdminNotifications();
+  }
+  renderAdminNotifications();
+}
+
+function saveAdminNotifications() {
+  localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(adminNotifications));
+}
+
+function addAdminNotification(entry) {
+  const notif = {
+    id: 'notif-' + Date.now(),
+    title: `New response submitted by ${entry.participantName} (${entry.department})`,
+    time: entry.timestamp,
+    read: false
+  };
+  adminNotifications.unshift(notif);
+  saveAdminNotifications();
+  renderAdminNotifications();
+}
+
+function renderAdminNotifications() {
+  const badge = document.getElementById('adminNotifBadge');
+  const list = document.getElementById('adminNotifList');
+  if (!badge || !list) return;
+
+  const unreadCount = adminNotifications.filter(n => !n.read).length;
+  badge.textContent = unreadCount;
+  badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+
+  if (adminNotifications.length === 0) {
+    list.innerHTML = `<div style="padding:1.5rem; text-align:center; color:var(--text-muted); font-size:0.82rem;">No response notifications yet.</div>`;
+    return;
+  }
+
+  list.innerHTML = adminNotifications.map(n => `
+    <div class="notif-item ${n.read ? '' : 'unread'}">
+      <div class="notif-icon"><i class="fa-solid fa-paper-plane"></i></div>
+      <div class="notif-content">
+        <div class="notif-title">${escapeHtml(n.title)}</div>
+        <div class="notif-time"><i class="fa-solid fa-clock"></i> ${n.time}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleAdminNotifDropdown() {
+  const dropdown = document.getElementById('adminNotifDropdown');
+  if (!dropdown) return;
+  
+  const isActive = dropdown.classList.contains('active');
+  if (!isActive) {
+    dropdown.classList.add('active');
+    // Mark as read
+    adminNotifications.forEach(n => n.read = true);
+    saveAdminNotifications();
+    renderAdminNotifications();
+  } else {
+    dropdown.classList.remove('active');
+  }
+}
+
+function clearAdminNotifications() {
+  adminNotifications = [];
+  saveAdminNotifications();
+  renderAdminNotifications();
+  showToast('Response notifications cleared', 'info');
+}
+
+/* ==========================================================================
+   10. Participant Receipt Notification Modal
+   ========================================================================== */
+
+function openParticipantReceiptModal(entry) {
+  const subIdElem = document.getElementById('receiptSubId');
+  const nameElem = document.getElementById('receiptName');
+  const deptElem = document.getElementById('receiptDept');
+  const regNoElem = document.getElementById('receiptRegNo');
+  const timeElem = document.getElementById('receiptTime');
+
+  if (subIdElem) subIdElem.textContent = entry.id;
+  if (nameElem) nameElem.textContent = entry.participantName;
+  if (deptElem) deptElem.textContent = entry.department;
+  if (regNoElem) regNoElem.textContent = entry.registerNumber;
+  if (timeElem) timeElem.textContent = entry.timestamp;
+
+  const modal = document.getElementById('participantReceiptModal');
+  if (modal) modal.classList.add('active');
+}
+
+function closeParticipantReceiptModal() {
+  const modal = document.getElementById('participantReceiptModal');
+  if (modal) modal.classList.remove('active');
+}
+
+/* ==========================================================================
+   11. Fullscreen Viewer & Image Saver (Download)
+   ========================================================================== */
+
+function downloadSubmissionImage(imageUrl, fileName) {
+  if (!imageUrl) {
+    showToast('Image URL unavailable for download', 'error');
+    return;
+  }
+  const link = document.createElement('a');
+  link.href = imageUrl;
+  link.download = fileName || 'sketchfest_artwork.png';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast('Downloading submission artwork...', 'success');
+}
+
+function openFullscreenImage(imageUrl, title, details) {
+  const modal = document.getElementById('fullscreenViewerModal');
+  const img = document.getElementById('fullscreenImg');
+  const titleElem = document.getElementById('fullscreenTitleText');
+  const subElem = document.getElementById('fullscreenSubDetails');
+
+  if (img) img.src = imageUrl;
+  if (titleElem) titleElem.textContent = title ? `Participant: ${title}` : 'Fullscreen Artwork View';
+  if (subElem) subElem.textContent = details || 'Dynamoz\'26 SketchFest Submission';
+
+  if (modal) modal.classList.add('active');
+}
+
+function closeFullscreenViewer() {
+  const modal = document.getElementById('fullscreenViewerModal');
+  if (modal) modal.classList.remove('active');
+}
+
+function downloadFullscreenImage() {
+  const img = document.getElementById('fullscreenImg');
+  if (img && img.src) {
+    const titleElem = document.getElementById('fullscreenTitleText');
+    const name = titleElem ? titleElem.textContent.replace('Participant: ', '') : 'artwork';
+    downloadSubmissionImage(img.src, `${name}_fullscreen.png`);
+  }
+}
+
+function openFullscreenModalCurrent() {
+  if (!activeSelectedSubmissionId) return;
+  const item = submissions.find(s => s.id === activeSelectedSubmissionId);
+  if (item) {
+    openFullscreenImage(item.imageUrl, item.participantName, `${item.department} - ${item.registerNumber}`);
+  }
+}
+
+function downloadCurrentModalImage() {
+  if (!activeSelectedSubmissionId) return;
+  const item = submissions.find(s => s.id === activeSelectedSubmissionId);
+  if (item) {
+    downloadSubmissionImage(item.imageUrl, `${item.participantName}_${item.registerNumber}_artwork.png`);
+  }
+}
+

@@ -20,6 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
   setupDragAndDrop();
   renderAllViews();
   updateHeroStats();
+  setupRealtimeStorageSync();
 });
 
 /* ==========================================================================
@@ -41,6 +42,35 @@ function initStorage() {
     submissions = Array.from(SEED_SUBMISSIONS);
     saveSubmissions();
   }
+}
+
+function setupRealtimeStorageSync() {
+  window.addEventListener('storage', (event) => {
+    if (event.key === STORAGE_KEY && event.newValue) {
+      try {
+        const newSubmissions = JSON.parse(event.newValue);
+        const prevCount = submissions.length;
+        submissions = newSubmissions;
+
+        renderAllViews();
+        updateHeroStats();
+
+        if (newSubmissions.length > prevCount && isAdminAuthenticated) {
+          const newest = newSubmissions[0];
+          showToast(`⚡ Real-time Alert: New entry received from ${newest.participantName} (${newest.department})`, 'success');
+        }
+      } catch (e) {
+        console.error('Error syncing real-time storage update:', e);
+      }
+    }
+
+    if (event.key === NOTIF_STORAGE_KEY && event.newValue) {
+      try {
+        adminNotifications = JSON.parse(event.newValue);
+        renderAdminNotifications();
+      } catch (e) {}
+    }
+  });
 }
 
 function saveSubmissions() {

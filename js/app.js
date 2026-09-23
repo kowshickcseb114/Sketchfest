@@ -51,24 +51,21 @@ function populateDropdowns() {
   const deptSelect = document.getElementById('department');
   const adminDeptFilter = document.getElementById('adminDeptFilter');
   const publicDeptFilter = document.getElementById('publicDeptFilter');
-  
-  const catSelect = document.getElementById('category');
-  const adminCatFilter = document.getElementById('adminCatFilter');
-  const publicCatFilter = document.getElementById('publicCatFilter');
 
-  // Populate Departments
-  DEPARTMENTS.forEach(dept => {
-    if (deptSelect) deptSelect.innerHTML += `<option value="${dept}">${dept}</option>`;
-    if (adminDeptFilter) adminDeptFilter.innerHTML += `<option value="${dept}">${dept}</option>`;
-    if (publicDeptFilter) publicDeptFilter.innerHTML += `<option value="${dept}">${dept}</option>`;
-  });
+  if (deptSelect) {
+    deptSelect.innerHTML = `<option value="" disabled selected>Select Your Department...</option>` +
+      DEPARTMENTS.map(dept => `<option value="${dept}">${dept}</option>`).join('');
+  }
 
-  // Populate Categories
-  CATEGORIES.forEach(cat => {
-    if (catSelect) catSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
-    if (adminCatFilter) adminCatFilter.innerHTML += `<option value="${cat}">${cat}</option>`;
-    if (publicCatFilter) publicCatFilter.innerHTML += `<option value="${cat}">${cat}</option>`;
-  });
+  if (adminDeptFilter) {
+    adminDeptFilter.innerHTML = `<option value="ALL">All Departments</option>` +
+      DEPARTMENTS.map(dept => `<option value="${dept}">${dept}</option>`).join('');
+  }
+
+  if (publicDeptFilter) {
+    publicDeptFilter.innerHTML = `<option value="ALL">All Departments</option>` +
+      DEPARTMENTS.map(dept => `<option value="${dept}">${dept}</option>`).join('');
+  }
 }
 
 // Security Settings
@@ -285,6 +282,22 @@ function handleFormSubmission(event) {
 
   if (!name || !dept || !regNo) {
     showToast('Please fill in all required fields (*)', 'error');
+    return;
+  }
+
+  // Duplicate Check for Register Number and Participant Name
+  const normalizedRegNo = regNo.toLowerCase();
+  const normalizedName = name.toLowerCase();
+
+  const existingRegNo = submissions.find(s => s.registerNumber && s.registerNumber.trim().toLowerCase() === normalizedRegNo);
+  if (existingRegNo) {
+    showToast(`Submission Rejected: Register Number "${regNo}" has already submitted an entry! Duplicate submissions are not allowed.`, 'error');
+    return;
+  }
+
+  const existingName = submissions.find(s => s.participantName && s.participantName.trim().toLowerCase() === normalizedName);
+  if (existingName) {
+    showToast(`Submission Rejected: Participant Name "${name}" has already submitted an entry! Duplicate submissions are not allowed.`, 'error');
     return;
   }
 

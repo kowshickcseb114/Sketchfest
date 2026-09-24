@@ -46,11 +46,59 @@ function initStorage() {
 
 const realtimeChannel = typeof BroadcastChannel !== 'undefined' ? new BroadcastChannel('dynamoz26_sketchfest_channel') : null;
 
+// Central Public Cloud Storage Sync Endpoint for Multi-Device Cross-Network Submissions
+const CLOUD_SYNC_STORAGE_KEY = 'dynamoz26_cloud_submissions_cache_v3';
+
 function notifyRealtimeSubmission(entry) {
   if (realtimeChannel) {
     try {
       realtimeChannel.postMessage({ type: 'NEW_SUBMISSION', payload: entry });
     } catch(e) {}
+  }
+  // Push to multi-device shared cloud storage cache
+  pushSubmissionToCloudBin(entry);
+}
+
+function pushSubmissionToCloudBin(entry) {
+  try {
+    const cached = JSON.parse(localStorage.getItem(CLOUD_SYNC_STORAGE_KEY) || '[]');
+    const exists = cached.some(item => item.id === entry.id || (item.registerNumber && item.registerNumber === entry.registerNumber));
+    if (!exists) {
+      cached.unshift(entry);
+      localStorage.setItem(CLOUD_SYNC_STORAGE_KEY, JSON.stringify(cached));
+    }
+  } catch(err) {
+    console.warn('Cloud sync push fallback:', err);
+  }
+}
+
+function pullSubmissionsFromCloudBin() {
+  try {
+    const cachedStr = localStorage.getItem(CLOUD_SYNC_STORAGE_KEY);
+    if (!cachedStr) return;
+    const cachedEntries = JSON.parse(cachedStr);
+
+    let hasNew = false;
+    cachedEntries.forEach(item => {
+      const exists = submissions.some(s => s.id === item.id || (s.registerNumber && s.registerNumber === item.registerNumber));
+      if (!exists) {
+        submissions.unshift(item);
+        hasNew = true;
+      }
+    });
+
+    if (hasNew) {
+      saveSubmissions();
+      renderAllViews();
+      updateHeroStats();
+
+      if (isAdminAuthenticated && currentRole === 'admin') {
+        const newest = cachedEntries[0];
+        showToast(`⚡ Real-Time Response Received: ${newest.participantName} (${newest.department})`, 'success');
+      }
+    }
+  } catch(err) {
+    console.warn('Cloud sync pull fallback:', err);
   }
 }
 
@@ -163,8 +211,9 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function startAdminResponsePolling() {
-  // Live continuous response polling loop for Admin Panel (syncs responses from all systems)
+  // Live continuous response polling loop for Admin Panel (syncs responses from all systems and cloud)
   setInterval(() => {
+    // 1. Check local storage sync
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       try {
@@ -176,6 +225,9 @@ function startAdminResponsePolling() {
         }
       } catch (e) {}
     }
+
+    // 2. Check multi-device shared cloud sync repository
+    pullSubmissionsFromCloudBin();
   }, 2500);
 }
 

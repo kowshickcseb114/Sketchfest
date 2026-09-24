@@ -159,7 +159,25 @@ document.addEventListener('DOMContentLoaded', () => {
   renderAllViews();
   updateHeroStats();
   setupKeyboardListeners();
+  startAdminResponsePolling();
 });
+
+function startAdminResponsePolling() {
+  // Live continuous response polling loop for Admin Panel (syncs responses from all systems)
+  setInterval(() => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      try {
+        const latest = JSON.parse(stored);
+        if (JSON.stringify(latest) !== JSON.stringify(submissions)) {
+          submissions = latest;
+          renderAllViews();
+          updateHeroStats();
+        }
+      } catch (e) {}
+    }
+  }, 2500);
+}
 
 function setupKeyboardListeners() {
   document.addEventListener('keydown', (e) => {
